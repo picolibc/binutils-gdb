@@ -1035,6 +1035,20 @@ maybe_perform_syscall (SIM_DESC sd, int call_addr)
 }
 
 static void
+msp430_semihost (SIM_DESC sd)
+{
+  switch(REG(12)) {
+  case 0:
+    sim_engine_halt(sd, MSP430_CPU(sd), NULL,
+		    REG(0), sim_exited, REG(13));
+    break;
+  case 1:
+    putchar(REG(13));
+    break;
+  }
+}
+
+static void
 msp430_step_once (SIM_DESC sd)
 {
   Get_Byte_Local_Data ld;
@@ -1121,25 +1135,31 @@ msp430_step_once (SIM_DESC sd)
 	  && opcode->op[0].type == MSP430_Operand_Register
 	  && opcode->op[0].reg == MSR_CG
 	  && opcode->op[1].type == MSP430_Operand_Immediate
-	  && opcode->op[1].addend == 0
-	  /* A 16-bit write of #0 is a NOP; an 8-bit write is a BRK.  */
+	  /* only 8-bit writes are magic */
 	  && opcode->size == 8)
 	{
+	  /* an 8-bit write of #0 is a BRK.  */
 	  /* This is the designated software breakpoint instruction.  */
-	  PC -= opsize;
-	  sim_engine_halt (sd, MSP430_CPU (sd), NULL,
-			   MSP430_CPU (sd)->state.regs[0],
-			   sim_stopped, SIM_SIGTRAP);
-
-	}
-      else
-	{
-	  /* Otherwise, do the move.  */
-	  for (rept = 0; rept < n_repeats; rept ++)
+	  if (opcode->op[1].addend == 0)
 	    {
-	      DEST (SRC);
+	      PC -= opsize;
+	      sim_engine_halt (sd, MSP430_CPU (sd), NULL,
+			       MSP430_CPU (sd)->state.regs[0],
+			       sim_stopped, SIM_SIGTRAP);
+	      break;
+	    }
+	  else if (opcode->op[1].addend == 1)
+	    {
+	      msp430_semihost(sd);
+	      break;
 	    }
 	}
+
+      /* Otherwise, do the move.  */
+      for (rept = 0; rept < n_repeats; rept ++)
+      {
+	DEST (SRC);
+      }
       break;
 
     case MSO_addc:
