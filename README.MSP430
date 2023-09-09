@@ -1,0 +1,9 @@
+To build this for use with picolibc testing:
+
+$ mkdir build
+$ cd build
+$ ../configure --target=msp430-unknown-elf --enable-sim --prefix=/opt/msp430
+$ make
+$ make install
+$ PATH=/opt/msp430/bin:$PATH
+
