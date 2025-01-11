@@ -129,8 +129,7 @@ lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
 
-  if ((STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT)
-      || (GET_H_GR (8) == TARGET_NEWLIB_SYS_exit))
+  if ((STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT))
     {
       /* Delegate system call to host O/S.  */
       long result, result2;
